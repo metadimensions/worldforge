@@ -120,6 +120,7 @@ Deno.test("invalid model response is recorded and retried; results are preserved
   await advanceExperiment(deps, exp.id);
   e = await store.getExperiment(exp.id);
   assertEquals([e!.phase, e!.error_count], ["generate", 0]);
+  assertEquals(llm.requests.map((r) => Boolean(r.plain)), [false, true]);
 });
 
 Deno.test("repeated AI failures skip to the random arm instead of losing the experiment", async () => {

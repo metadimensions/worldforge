@@ -1,7 +1,7 @@
 import { assert, assertEquals } from "jsr:@std/assert@1.0.13";
 
 import { MINI_SPACE, proposals, VALID_ANALYSIS } from "./testing.ts";
-import { proposalSchema, validateAnalysis, validateProposals } from "./validation.ts";
+import { cleanName, proposalSchema, validateAnalysis, validateProposals } from "./validation.ts";
 
 Deno.test("valid analysis passes", () => {
   const r = validateAnalysis(VALID_ANALYSIS, ["S1"]);
@@ -68,4 +68,20 @@ Deno.test("shape normalisation: plain strings become items and citations are rea
   assertEquals(r.value.limitations, ["2D only."]);
   assert(!validateAnalysis({ ...VALID_ANALYSIS, evidence: ["no citation here"] }, ["S1"]).ok);
   assert(!validateAnalysis({ ...VALID_ANALYSIS, evidence: ["S9 also failed"] }, ["S1"]).ok);
+});
+
+Deno.test("scenario names lose run ids and test numbers; predicted outcome is normalised", () => {
+  assertEquals(cleanName("S4-HighForkliftSpeed"), "High Forklift Speed");
+  assertEquals(cleanName("T1_start_time_2.4"), "start time 2.4");
+  assertEquals(cleanName("RobotSpeedStress"), "Robot Speed Stress");
+  assertEquals(cleanName("Late Northbound Forklift"), "Late Northbound Forklift");
+  assertEquals(cleanName("S5"), "S5");
+  const data = proposals([2.5, 2.6, 2.7]);
+  data.proposed_scenarios[0].name = "S4-HighFork";
+  (data.proposed_scenarios[0] as any).predicted_outcome = "Collision";
+  (data.proposed_scenarios[1] as any).predicted_outcome = "no path";
+  (data.proposed_scenarios[2] as any).predicted_outcome = "explodes";
+  const r = validateProposals(data, MINI_SPACE, 3);
+  assertEquals(r.valid[0].name, "High Fork");
+  assertEquals(r.valid.map((p) => p.predicted_outcome), ["collision", "no_path", null]);
 });

@@ -15,6 +15,7 @@ export interface ChatJsonRequest {
   user: string;
   schemaName: string;
   schema: Json;
+  plain?: boolean;
 }
 
 export interface ChatJsonResult {
@@ -49,9 +50,11 @@ export function makeNemotron(cfg: Config["nebius"], fetchImpl: typeof fetch = fe
         { role: "system", content: req.system },
         { role: "user", content: req.user },
       ],
-      response_format: cfg.responseFormat === "json_schema"
-        ? { type: "json_schema", json_schema: { name: req.schemaName, strict: true, schema: req.schema } }
-        : { type: "json_object" },
+      ...(req.plain ? {} : {
+        response_format: cfg.responseFormat === "json_schema"
+          ? { type: "json_schema", json_schema: { name: req.schemaName, strict: true, schema: req.schema } }
+          : { type: "json_object" },
+      }),
     };
 
     let lastError: NemotronError | null = null;
@@ -104,6 +107,12 @@ export function makeNemotron(cfg: Config["nebius"], fetchImpl: typeof fetch = fe
         data = extractJson(content);
       } catch {
         throw new NemotronError("invalid_response", "model output is not valid JSON");
+      }
+      if (choice?.finish_reason === "length") {
+        throw new NemotronError("invalid_response", "model output was cut off (ran out of tokens while reasoning)");
+      }
+      if (data && typeof data === "object" && !Array.isArray(data) && Object.keys(data).length === 0) {
+        throw new NemotronError("invalid_response", "model returned an empty JSON object");
       }
       return { data, model: payload.model ?? cfg.model, usage: payload.usage ?? null };
     }

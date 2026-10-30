@@ -117,6 +117,9 @@ Rules:
 - Each scenario must test, refine or try to falsify the current hypothesis, or probe a different, plausible
   failure mode. Do not repeat a parameter combination that was already executed. Make the scenarios differ.
 - "prediction" is your expectation if the hypothesis is right. It is NOT a result: these scenarios have not run.
+  "predicted_outcome" is the single outcome you expect: success, collision, no_path, timeout or stuck.
+- "name" is 2 to 5 plain words in Title Case describing the scenario, e.g. "Late Northbound Forklift".
+  Do not put numbers, run ids (S1, S2, ...) or test labels (T1, Test 2) in names.
 - Keep each string under 250 characters.
 
 Respond with ONE JSON object, exactly this shape:
@@ -126,6 +129,7 @@ Respond with ONE JSON object, exactly this shape:
       "name": "<short name>",
       "hypothesis": "<what this scenario tests>",
       "prediction": "<expected outcome if the hypothesis holds (untested)>",
+      "predicted_outcome": "<success | collision | no_path | timeout | stuck>",
       "rationale": "<why this is informative>",
       "parameters": { "<parameter name>": <number | enum string | null>, ... }
     }

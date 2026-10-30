@@ -1,4 +1,4 @@
-import type { EvidenceItem, Json, ParameterSpace, Params } from "./types.ts";
+import type { EvidenceItem, Json, Outcome, ParameterSpace, Params } from "./types.ts";
 
 export type Validated<T> = { ok: true; value: T } | { ok: false; errors: string[] };
 
@@ -119,6 +119,7 @@ export interface RawProposal {
   name: string;
   hypothesis: string;
   prediction: string;
+  predicted_outcome: Outcome | null;
   rationale: string;
   overrides: Params;
 }
@@ -140,11 +141,12 @@ export function proposalSchema(space: ParameterSpace): Json {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["name", "hypothesis", "prediction", "rationale", "parameters"],
+          required: ["name", "hypothesis", "prediction", "predicted_outcome", "rationale", "parameters"],
           properties: {
             name: { type: "string" },
             hypothesis: { type: "string" },
             prediction: { type: "string" },
+            predicted_outcome: { type: "string", enum: [...OUTCOMES] },
             rationale: { type: "string" },
             parameters: {
               type: "object",
@@ -181,10 +183,12 @@ export function validateProposals(
       rejected.push({ proposal: raw as Json, errors: ["proposal must be an object"] });
       continue;
     }
-    const name = text(raw.name, "name", errors);
+    const name = cleanName(text(raw.name, "name", errors));
     const hypothesis = text(raw.hypothesis, "hypothesis", errors);
     const prediction = text(raw.prediction, "prediction", errors);
     const rationale = text(raw.rationale, "rationale", errors, { allowEmpty: true });
+    const predicted = typeof raw.predicted_outcome === "string" ? raw.predicted_outcome.trim().toLowerCase().replace(/[\s-]+/g, "_") : "";
+    const predicted_outcome = (OUTCOMES as readonly string[]).includes(predicted) ? (predicted as Outcome) : null;
     const overrides: Params = {};
     if (!isRecord(raw.parameters)) {
       errors.push("parameters must be an object");
@@ -208,12 +212,24 @@ export function validateProposals(
       }
     }
     if (errors.length) rejected.push({ proposal: raw as Json, errors });
-    else valid.push({ name, hypothesis, prediction, rationale, overrides });
+    else valid.push({ name, hypothesis, prediction, predicted_outcome, rationale, overrides });
   }
   for (const extra of valid.splice(maxCount)) {
     rejected.push({ proposal: extra as unknown as Json, errors: ["over the per-iteration scenario budget"] });
   }
   return { valid, rejected, errors: [] };
+}
+
+export const OUTCOMES = ["success", "collision", "no_path", "timeout", "stuck"] as const;
+
+export function cleanName(name: string): string {
+  const cleaned = name
+    .replace(/^(?:(?:[ST]|run|test|scenario)\s*#?\d+|#?\d+)\s*[-_.:)\]]*\s*/i, "")
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || name;
 }
 
 export function paramsKey(p: Params): string {

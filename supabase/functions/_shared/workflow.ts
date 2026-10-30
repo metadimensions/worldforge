@@ -189,7 +189,7 @@ async function callModel(deps: Deps, exp: Experiment, req: ChatJsonRequest) {
   const fresh = await requireExperiment(deps, exp.id);
   if (fresh.model_calls >= modelCallCap(fresh.max_iterations)) throw new WorkflowError(429, "model call budget exhausted for this experiment");
   await deps.store.updateExperiment(exp.id, { model_calls: fresh.model_calls + 1 });
-  return deps.llm(req);
+  return deps.llm(fresh.error_count > 0 ? { ...req, plain: true } : req);
 }
 
 async function stillRunning(deps: Deps, id: string): Promise<boolean> {

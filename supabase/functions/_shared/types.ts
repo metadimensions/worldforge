@@ -97,6 +97,7 @@ export interface Proposal {
   name: string;
   hypothesis: string;
   prediction: string;
+  predicted_outcome?: Outcome | null;
   rationale: string;
   overrides: Params;
   params: Params;

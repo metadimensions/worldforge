@@ -1,8 +1,8 @@
 "use client";
 
-import { Edges, Html, Line, OrbitControls } from "@react-three/drei";
+import { Edges, Line, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
@@ -54,27 +54,100 @@ function highlights(replay: Replay, time: number): Map<string, string> {
   return out;
 }
 
+interface SceneLabelSpec {
+  key: string;
+  tone: "collision" | "unreachable";
+  text: string;
+  position: Vec3;
+}
+
+function sceneLabels(replay: Replay, time: number): SceneLabelSpec[] {
+  const { result } = replay;
+  const out: SceneLabelSpec[] = [];
+  if (result.outcome === "no_path") {
+    const [gx, , gz] = toScene(result.goal[0], result.goal[1]);
+    out.push({ key: "goal", tone: "unreachable", text: "Goal unreachable", position: [gx, 1.15, gz] });
+    const a = toScene(result.start[0], result.start[1]);
+    out.push({ key: "route", tone: "unreachable", text: "No valid route", position: [(a[0] + gx) / 2, 0.35, (a[2] + gz) / 2] });
+  }
+  if (result.collision && time >= result.collision.t) {
+    const [cx, , cz] = toScene(result.collision.x, result.collision.y);
+    out.push({ key: "collision", tone: "collision", text: `Collision · t = ${result.collision.t.toFixed(2)} s`, position: [cx, 0.65, cz] });
+  }
+  return out;
+}
+
 export default function WarehouseScene(props: SceneProps) {
   const { scenario } = props.replay;
   const w = toSceneLength(scenario.width);
   const d = toSceneLength(scenario.height);
+  const labels = sceneLabels(props.replay, props.time);
+  const labelEls = useRef(new Map<string, HTMLDivElement>());
   return (
-    <Canvas shadows camera={{ fov: 45, near: 0.05, far: 200, position: overviewPose(props.replay).position }}>
-      <color attach="background" args={["#eef0f3"]} />
-      <hemisphereLight args={["#ffffff", "#b0a898", 0.9]} />
-      <directionalLight
-        position={[w * 0.2, 9, d * 0.2]}
-        intensity={1.6}
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-w}
-        shadow-camera-right={w}
-        shadow-camera-top={d}
-        shadow-camera-bottom={-d}
-      />
-      <SceneContents {...props} />
-    </Canvas>
+    <div style={{ position: "relative", width: "100%", height: "100%", isolation: "isolate", overflow: "hidden" }}>
+      <Canvas shadows camera={{ fov: 45, near: 0.05, far: 200, position: overviewPose(props.replay).position }}>
+        <color attach="background" args={["#eef0f3"]} />
+        <hemisphereLight args={["#ffffff", "#b0a898", 0.9]} />
+        <directionalLight
+          position={[w * 0.2, 9, d * 0.2]}
+          intensity={1.6}
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-left={-w}
+          shadow-camera-right={w}
+          shadow-camera-top={d}
+          shadow-camera-bottom={-d}
+        />
+        <SceneContents {...props} />
+        <LabelProjector labels={labels} elements={labelEls} />
+      </Canvas>
+      {labels.map((l) => (
+        <div
+          key={l.key}
+          ref={(el) => {
+            if (el) labelEls.current.set(l.key, el);
+            else labelEls.current.delete(l.key);
+          }}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            visibility: "hidden",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+            font: "600 12px/1.2 system-ui, sans-serif",
+            color: "#fff",
+            background: l.tone === "collision" ? COLORS.collision : COLORS.unreachable,
+            padding: "4px 8px",
+            borderRadius: 6,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+          }}
+        >
+          {l.text}
+        </div>
+      ))}
+    </div>
   );
+}
+
+function LabelProjector({ labels, elements }: { labels: SceneLabelSpec[]; elements: RefObject<Map<string, HTMLDivElement>> }) {
+  const v = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera, size }) => {
+    for (const l of labels) {
+      const el = elements.current.get(l.key);
+      if (!el) continue;
+      v.set(l.position[0], l.position[1], l.position[2]).project(camera);
+      if (v.z > 1 || v.z < -1) {
+        el.style.visibility = "hidden";
+        continue;
+      }
+      const x = ((v.x + 1) / 2) * size.width;
+      const y = ((1 - v.y) / 2) * size.height;
+      el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      el.style.visibility = "visible";
+    }
+  });
+  return null;
 }
 
 function SceneContents({ replay, time, cameraMode, resetKey }: SceneProps) {
@@ -111,7 +184,6 @@ function SceneContents({ replay, time, cameraMode, resetKey }: SceneProps) {
         <CollisionMarker
           x={result.collision.x}
           y={result.collision.y}
-          t={result.collision.t}
           radius={scenario.robot_radius}
         />
       )}
@@ -240,7 +312,6 @@ function GoalMarker({ x, y, tolerance, unreachable }: { x: number; y: number; to
         <boxGeometry args={[0.2, 0.13, 0.01]} />
         <meshStandardMaterial color={color} side={THREE.DoubleSide} />
       </mesh>
-      {unreachable && <SceneLabel position={[0, 1.15, 0]} tone="unreachable">Goal unreachable</SceneLabel>}
     </group>
   );
 }
@@ -261,7 +332,6 @@ function NoRouteIndicator({ from, to }: { from: [number, number]; to: [number, n
       <Line points={[a, b]} color={COLORS.unreachable} lineWidth={1.5} dashed dashSize={0.06} gapSize={0.09} transparent opacity={0.6} />
       <Line points={[[mid[0] - s, 0.03, mid[2] - s], [mid[0] + s, 0.03, mid[2] + s]]} color={COLORS.unreachable} lineWidth={4} />
       <Line points={[[mid[0] - s, 0.03, mid[2] + s], [mid[0] + s, 0.03, mid[2] - s]]} color={COLORS.unreachable} lineWidth={4} />
-      <SceneLabel position={[mid[0], 0.35, mid[2]]} tone="unreachable">No valid route</SceneLabel>
     </group>
   );
 }
@@ -313,7 +383,7 @@ function Robot({ replay, pose, time }: { replay: Replay; pose: Pose; time: numbe
   );
 }
 
-function CollisionMarker({ x, y, t, radius }: { x: number; y: number; t: number; radius: number }) {
+function CollisionMarker({ x, y, radius }: { x: number; y: number; radius: number }) {
   const ring = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (ring.current) ring.current.scale.setScalar(1 + 0.18 * Math.sin(clock.elapsedTime * 6));
@@ -330,31 +400,7 @@ function CollisionMarker({ x, y, t, radius }: { x: number; y: number; t: number;
         <circleGeometry args={[r * 0.25, 24]} />
         <meshBasicMaterial color={COLORS.collision} />
       </mesh>
-      <SceneLabel position={[0, 0.65, 0]} tone="collision">
-        Collision · t = {t.toFixed(2)} s
-      </SceneLabel>
     </group>
-  );
-}
-
-function SceneLabel({ position, tone, children }: { position: Vec3; tone: "collision" | "unreachable"; children: React.ReactNode }) {
-  const color = tone === "collision" ? COLORS.collision : COLORS.unreachable;
-  return (
-    <Html position={position} center zIndexRange={[10, 0]} style={{ pointerEvents: "none" }}>
-      <div
-        style={{
-          whiteSpace: "nowrap",
-          font: "600 12px/1.2 system-ui, sans-serif",
-          color: "#fff",
-          background: color,
-          padding: "4px 8px",
-          borderRadius: 6,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-        }}
-      >
-        {children}
-      </div>
-    </Html>
   );
 }
 

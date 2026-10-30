@@ -35,6 +35,17 @@ Deno.test("successful Nemotron request uses structured output and parses JSON", 
   assertEquals(strictBody.response_format.json_schema.name, "failure_analysis");
 });
 
+Deno.test("plain requests omit response_format", async () => {
+  let body: Record<string, unknown> = {};
+  const llm = makeNemotron(testConfig().nebius, (_url, init) => {
+    body = JSON.parse(String(init!.body));
+    return Promise.resolve(reply('Here it is: {"ok": true}'));
+  });
+  const res = await llm({ ...REQ, plain: true });
+  assertEquals(res.data, { ok: true });
+  assert(!("response_format" in body));
+});
+
 Deno.test("missing Token Factory key fails before any request", async () => {
   let called = false;
   const llm = makeNemotron(testConfig({ NEBIUS_API_KEY: "" }).nebius, () => {
@@ -61,6 +72,8 @@ Deno.test("invalid model responses are rejected", async () => {
     [reply("not json at all"), "non-JSON content"],
     [reply(null, "length"), "out of tokens"],
     [new Response("<html>", { status: 200 }), "non-JSON body"],
+    [reply("{}"), "empty object"],
+    [reply('{"proposed_scenarios": []}', "length"), "cut off"],
   ] as const) {
     const llm = makeNemotron(testConfig().nebius, () => Promise.resolve(res.clone()));
     const err = await assertRejects(() => llm(REQ), NemotronError, undefined, why);

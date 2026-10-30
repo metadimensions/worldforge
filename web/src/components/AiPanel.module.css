@@ -340,10 +340,37 @@
 }
 
 .name {
-  max-width: 96px;
+  width: 100%;
+  max-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.proposalName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.verdict {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+.v_held { background: #e3f4ea; color: #1f8a4c; }
+.v_wrong { background: #fde8e8; color: #c4161c; }
+
+.sample {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a5300;
 }
 
 .arm_baseline,

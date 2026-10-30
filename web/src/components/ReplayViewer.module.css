@@ -87,7 +87,42 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 10px var(--panel-w, 340px);
+}
+
+.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.resizing canvas {
+  pointer-events: none;
+}
+
+.divider {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border-left: 1px solid #e2e4e9;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.divider span {
+  width: 4px;
+  height: 44px;
+  border-radius: 2px;
+  background: #cfd3db;
+  transition: background 0.15s, height 0.15s;
+}
+
+.divider:hover span,
+.divider:focus-visible span,
+.resizing .divider span {
+  background: #3d7a00;
+  height: 72px;
 }
 
 .stage {
@@ -397,6 +432,10 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(320px, 60dvh) auto;
     overflow-y: auto;
+  }
+
+  .divider {
+    display: none;
   }
 
   .panel {

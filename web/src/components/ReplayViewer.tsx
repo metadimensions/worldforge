@@ -17,6 +17,10 @@ const WarehouseScene = dynamic(() => import("./WarehouseScene"), {
 });
 
 const SPEEDS = [0.25, 0.5, 1, 2, 4];
+const PANEL_DEFAULT = 340;
+const PANEL_MIN = 300;
+const STAGE_MIN = 320;
+const PANEL_KEY = "worldforge.panelWidth";
 const FAILURE_LEAD_IN = 2.5;
 
 const METRICS: Record<string, { label: string; help: string }> = {
@@ -115,6 +119,64 @@ export default function ReplayViewer() {
   const [speed, setSpeed] = useState(1);
   const [cameraMode, setCameraMode] = useState<CameraMode>("overview");
   const [cameraReset, setCameraReset] = useState(0);
+
+  const mainRef = useRef<HTMLElement>(null);
+  const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
+  const [resizing, setResizing] = useState(false);
+
+  const clampPanel = useCallback((w: number) => {
+    const total = mainRef.current?.clientWidth ?? 0;
+    const max = Math.max(PANEL_MIN, total - STAGE_MIN);
+    return Math.round(Math.min(max, Math.max(PANEL_MIN, w)));
+  }, []);
+
+  const resizePanel = useCallback(
+    (w: number) => {
+      const next = clampPanel(w);
+      setPanelWidth(next);
+      try {
+        localStorage.setItem(PANEL_KEY, String(next));
+      } catch {}
+    },
+    [clampPanel],
+  );
+
+  useEffect(() => {
+    let saved = NaN;
+    try {
+      saved = Number(localStorage.getItem(PANEL_KEY));
+    } catch {}
+    const frame = requestAnimationFrame(() => {
+      if (saved > 0) setPanelWidth(clampPanel(saved));
+    });
+    const onResize = () => setPanelWidth((w) => clampPanel(w));
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [clampPanel]);
+
+  const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setResizing(true);
+  };
+  const moveResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizing || !mainRef.current) return;
+    resizePanel(mainRef.current.getBoundingClientRect().right - e.clientX);
+  };
+  const endResize = () => setResizing(false);
+  const keyResize = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 80 : 24;
+    if (e.key === "ArrowLeft") resizePanel(panelWidth + step);
+    else if (e.key === "ArrowRight") resizePanel(panelWidth - step);
+    else if (e.key === "Home") resizePanel(Number.MAX_SAFE_INTEGER);
+    else if (e.key === "End") resizePanel(PANEL_MIN);
+    else return;
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const seek = useCallback((t: number) => {
     timeRef.current = t;
@@ -294,7 +356,11 @@ export default function ReplayViewer() {
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main
+        ref={mainRef}
+        className={`${styles.main} ${resizing ? styles.resizing : ""}`}
+        style={{ "--panel-w": `${panelWidth}px` } as React.CSSProperties}
+      >
         <section className={styles.stage}>
           {replay ? (
             <WarehouseScene replay={replay} time={time} cameraMode={cameraMode} resetKey={cameraReset} />
@@ -329,6 +395,25 @@ export default function ReplayViewer() {
             </div>
           )}
         </section>
+
+        <div
+          className={styles.divider}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize results panel"
+          aria-valuemin={PANEL_MIN}
+          aria-valuenow={panelWidth}
+          tabIndex={0}
+          title="Drag to resize · double-click to reset"
+          onPointerDown={startResize}
+          onPointerMove={moveResize}
+          onPointerUp={endResize}
+          onPointerCancel={endResize}
+          onDoubleClick={() => resizePanel(PANEL_DEFAULT)}
+          onKeyDown={keyResize}
+        >
+          <span />
+        </div>
 
         <aside className={styles.panel}>
           <div className={styles.tabs} role="tablist">

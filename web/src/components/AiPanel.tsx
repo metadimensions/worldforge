@@ -8,9 +8,11 @@ import {
   ApiError,
   type Analysis,
   type ArmStats,
+  displayName,
   type ExperimentView,
   type Params,
   PHASE_LABELS,
+  predictedOutcome,
   ref,
   type SimulationSummary,
 } from "@/lib/experiments";
@@ -133,7 +135,7 @@ export default function AiPanel({ baselineParams, onReplay, onResume }: Props) {
     setLoadingReplay(s.id);
     try {
       const doc = await api.replay(view.experiment.id, s.id);
-      onReplay(doc, `${ref(s)} · ${s.name ?? s.arm} (${s.outcome})`, s.params);
+      onReplay(doc, `${ref(s)} · ${displayName(s.name) || s.arm} (${s.outcome})`, s.params);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -286,7 +288,7 @@ export default function AiPanel({ baselineParams, onReplay, onResume }: Props) {
                     <tr key={s.id}>
                       <td className={styles.ref}>{ref(s)}</td>
                       <td><span className={styles[`arm_${s.arm}`]}>{s.arm}</span></td>
-                      <td className={styles.name} title={s.reason}>{s.name}</td>
+                      <td className={styles.name} title={`${displayName(s.name)} — ${s.reason}`}>{displayName(s.name)}</td>
                       <td><Outcome outcome={s.outcome} /></td>
                       <td><ReplayButton s={s} /></td>
                     </tr>
@@ -340,11 +342,14 @@ function ProposalBatch({
         return (
           <div key={i} className={styles.proposal}>
             <div className={styles.proposalHead}>
-              <b>{p.name}</b>
+              <b className={styles.proposalName} title={displayName(p.name)}>{displayName(p.name)}</b>
               {run ? <Outcome outcome={run.outcome} /> : <span className={styles.pending}>not run yet</span>}
             </div>
             <p className={styles.small}>{p.hypothesis}</p>
-            <p className={styles.small}><span className={styles.label}>Prediction (untested):</span> {p.prediction}</p>
+            <p className={styles.small}>
+              <span className={styles.label}>{run ? "Prediction:" : "Prediction (untested):"}</span> {p.prediction}
+              {run && <Verdict predicted={predictedOutcome(p)} actual={run.outcome} />}
+            </p>
             <p className={styles.chips}>
               {changed(p.params, baseline).map(([k, v]) => <span key={k}>{k} = {String(v)}</span>)}
               {changed(p.params, baseline).length === 0 && <span>baseline parameters</span>}
@@ -370,13 +375,24 @@ function ProposalBatch({
   );
 }
 
+function Verdict({ predicted, actual }: { predicted: { outcome: string; inferred: boolean } | null; actual: string }) {
+  if (!predicted) return null;
+  const held = predicted.outcome === actual;
+  const note = `Predicted ${predicted.outcome.replace("_", " ")}${predicted.inferred ? " (read from the prediction text)" : ""}, actual ${actual.replace("_", " ")}`;
+  return (
+    <span className={`${styles.verdict} ${held ? styles.v_held : styles.v_wrong}`} title={note}>
+      {held ? "✓ Prediction held" : "✗ Prediction wrong"}
+    </span>
+  );
+}
+
 function ComparisonTable({ cmp }: { cmp: ExperimentView["comparison"] }) {
   const rows: [string, (a: ArmStats) => string][] = [
     ["Simulations", (a) => String(a.total_simulations)],
     ["Failures found", (a) => String(a.failures)],
     ["Failure discovery rate", (a) => (a.failure_discovery_rate === null ? "—" : `${Math.round(a.failure_discovery_rate * 100)}%`)],
     ["Unique failure modes", (a) => String(a.unique_failure_modes.length)],
-    ["New vs baseline", (a) => String(a.new_failure_modes.length)],
+    ["Failure types not in baseline", (a) => String(a.new_failure_modes.length)],
     ["First failure at run #", (a) => (a.first_failure_at === null ? "—" : String(a.first_failure_at))],
     ["Collisions", (a) => String(a.outcomes.collision ?? 0)],
     ["No path", (a) => String(a.outcomes.no_path ?? 0)],
@@ -396,6 +412,9 @@ function ComparisonTable({ cmp }: { cmp: ExperimentView["comparison"] }) {
           ))}
         </tbody>
       </table>
+      <p className={styles.sample}>
+        {Math.max(cmp.arms.ai.total_simulations, cmp.arms.random.total_simulations)} runs per arm — small sample
+      </p>
       {[...new Set([...cmp.arms.ai.unique_failure_modes, ...cmp.arms.random.unique_failure_modes])].length > 0 && (
         <p className={styles.chips}>
           {[...new Set([...cmp.arms.ai.unique_failure_modes, ...cmp.arms.random.unique_failure_modes])].map((m) => <span key={m}>{m}</span>)}

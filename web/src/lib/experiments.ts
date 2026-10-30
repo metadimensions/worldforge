@@ -13,6 +13,7 @@ export interface Proposal {
   name: string;
   hypothesis: string;
   prediction: string;
+  predicted_outcome?: string | null;
   rationale: string;
   overrides: Params;
   params: Params;
@@ -155,3 +156,29 @@ export const PHASE_LABELS: Record<string, string> = {
   compare: "Comparing AI-guided vs random testing",
   done: "Done",
 };
+
+export function displayName(name: string | null | undefined): string {
+  if (!name) return "";
+  const cleaned = name
+    .replace(/^(?:(?:[ST]|run|test|scenario)\s*#?\d+|#?\d+)\s*[-_.:)\]]*\s*/i, "")
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || name;
+}
+
+const OUTCOME_WORDS: [string, RegExp][] = [
+  ["collision", /\bcollid|\bcollision|\bcrash|\bhits?\b|\bimpact/],
+  ["success", /\bsuccess|\breach(es|ed)? (the )?goal|\bsafely\b/],
+  ["no_path", /\bno[ _]path\b|\bunreachable\b|\bno (valid )?route\b/],
+  ["timeout", /\btime ?outs?\b|\btimes out\b/],
+  ["stuck", /\bstuck\b/],
+];
+
+export function predictedOutcome(p: Pick<Proposal, "prediction" | "predicted_outcome">): { outcome: string; inferred: boolean } | null {
+  if (p.predicted_outcome) return { outcome: p.predicted_outcome, inferred: false };
+  const text = p.prediction.toLowerCase().replace(/\b(no|without|avoids?|avoided|prevents?|prevented)( a| any| the)? (collision|crash|contact)s?\b/g, "success");
+  const hits = OUTCOME_WORDS.filter(([, re]) => re.test(text)).map(([o]) => o);
+  return hits.length === 1 ? { outcome: hits[0], inferred: true } : null;
+}
