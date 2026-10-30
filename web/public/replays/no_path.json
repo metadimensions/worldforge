@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "scenario": {
+  "id": "no_path",
+  "description": "Goal enclosed by racks; no route exists.",
+  "width": 800.0,
+  "height": 600.0,
+  "start": [
+   55.0,
+   305.0
+  ],
+  "goal": [
+   650.0,
+   300.0
+  ],
+  "robot_radius": 15.0,
+  "max_speed": 80.0,
+  "dt": 0.05,
+  "max_steps": 1200,
+  "goal_tolerance": 8.0,
+  "grid_resolution": 10.0,
+  "safety_margin": 5.0,
+  "waypoint_tolerance": 4.0,
+  "stuck_window": 100,
+  "stuck_min_progress": 10.0,
+  "replan_after_blocked_steps": 20,
+  "start_jitter": 0.0,
+  "static_obstacles": [
+   {
+    "id": "wall_w",
+    "kind": "rect",
+    "x": 560,
+    "y": 300,
+    "width": 20,
+    "height": 220,
+    "radius": 0.0
+   },
+   {
+    "id": "wall_e",
+    "kind": "rect",
+    "x": 740,
+    "y": 300,
+    "width": 20,
+    "height": 220,
+    "radius": 0.0
+   },
+   {
+    "id": "wall_n",
+    "kind": "rect",
+    "x": 650,
+    "y": 200,
+    "width": 200,
+    "height": 20,
+    "radius": 0.0
+   },
+   {
+    "id": "wall_s",
+    "kind": "rect",
+    "x": 650,
+    "y": 400,
+    "width": 200,
+    "height": 20,
+    "radius": 0.0
+   }
+  ],
+  "moving_obstacles": [],
+  "expected_outcome": "no_path",
+  "failure_explanation": ""
+ },
+ "result": {
+  "scenario_id": "no_path",
+  "seed": 42,
+  "outcome": "no_path",
+  "reason": "Goal is unreachable because the static obstacle map blocks all valid routes: it is enclosed by wall_w, wall_n, wall_s, wall_e.",
+  "steps": 0,
+  "duration": 0.0,
+  "goal": [
+   650.0,
+   300.0
+  ],
+  "start": [
+   55.0,
+   305.0
+  ],
+  "planned_path": [],
+  "trajectory": [
+   {
+    "t": 0.0,
+    "x": 55.0,
+    "y": 305.0,
+    "heading": -0.008403163547646988,
+    "status": "start"
+   }
+  ],
+  "metrics": {
+   "distance_travelled": 0.0,
+   "straight_line_distance": 595.021008,
+   "path_efficiency": null,
+   "min_clearance": 480.0,
+   "final_distance_to_goal": 595.021008,
+   "goal_progress": 0.0,
+   "planned_path_length": null,
+   "replan_count": 0,
+   "wait_steps": 0
+  },
+  "collision": null,
+  "replans": [],
+  "diagnostics": {
+   "blocked": "goal_enclosed",
+   "blocking_obstacle_ids": [
+    "wall_w",
+    "wall_n",
+    "wall_s",
+    "wall_e"
+   ],
+   "message": "Goal is unreachable because the static obstacle map blocks all valid routes: it is enclosed by wall_w, wall_n, wall_s, wall_e."
+  }
+ },
+ "moving_obstacle_tracks": []
+}

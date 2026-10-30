@@ -1,0 +1,25 @@
+{
+ "replays": [
+  {
+   "id": "success",
+   "file": "success.json",
+   "seed": 42,
+   "outcome": "success",
+   "description": "Open warehouse with two obstacles away from the direct route."
+  },
+  {
+   "id": "failure",
+   "file": "failure.json",
+   "seed": 42,
+   "outcome": "collision",
+   "description": "Forklift crosses the main aisle as the robot passes the intersection."
+  },
+  {
+   "id": "no_path",
+   "file": "no_path.json",
+   "seed": 42,
+   "outcome": "no_path",
+   "description": "Goal enclosed by racks; no route exists."
+  }
+ ]
+}

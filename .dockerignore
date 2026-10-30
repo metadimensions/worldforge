@@ -1,0 +1,9 @@
+.venv
+.env
+.env.*
+web
+supabase
+tests
+**/__pycache__
+.pytest_cache
+*.egg-info
