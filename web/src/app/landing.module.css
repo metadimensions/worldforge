@@ -1,0 +1,282 @@
+.page {
+  min-height: 100dvh;
+  background: #fff;
+  color: #1d2230;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 18px 24px;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 14px;
+}
+
+.links a {
+  color: #4b5263;
+  text-decoration: none;
+}
+
+.links a:hover {
+  color: #1d2230;
+}
+
+.links .navCta {
+  color: #fff;
+  background: #1d2230;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.links .navCta:hover {
+  color: #fff;
+  background: #343b4f;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 48px;
+  align-items: center;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 48px 24px 72px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #3d7a00;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(34px, 4.6vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 20px 0 0;
+  max-width: 34em;
+  color: #4b5263;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.primary,
+.secondary {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.primary {
+  background: #3d7a00;
+  color: #fff;
+}
+
+.primary:hover {
+  background: #336600;
+}
+
+.secondary {
+  border: 1px solid #cfd3db;
+  color: #1d2230;
+}
+
+.secondary:hover {
+  border-color: #9aa1ae;
+}
+
+.shot {
+  margin: 0;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid #e2e4e9;
+  box-shadow: 0 20px 50px rgba(29, 34, 48, 0.14);
+}
+
+.shot figcaption {
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.section {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 56px 24px;
+  border-top: 1px solid #eceef2;
+}
+
+.section h2 {
+  margin: 0 0 28px;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  padding: 22px;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+.num {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #e8f2dc;
+  color: #3d7a00;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.steps h3 {
+  margin: 14px 0 8px;
+  font-size: 18px;
+}
+
+.steps p {
+  margin: 0;
+  color: #4b5263;
+  line-height: 1.55;
+}
+
+.demo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.demo ul {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo li {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 16px;
+  line-height: 1.5;
+}
+
+.demo li span {
+  color: #4b5263;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  border-top: 1px solid #eceef2;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.footer span:first-child {
+  color: #1d2230;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 24px;
+  }
+
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .demo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .demo .primary {
+    text-align: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .nav,
+  .hero,
+  .section,
+  .footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .links {
+    gap: 14px;
+  }
+
+  .links a:not(.navCta) {
+    display: none;
+  }
+
+  .demo li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .lead {
+    font-size: 16px;
+  }
+}

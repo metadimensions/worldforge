@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Params } from "@/lib/experiments";
@@ -291,9 +292,9 @@ export default function ReplayViewer() {
   return (
     <div className={styles.shell}>
       <header className={styles.toolbar}>
-        <div className={styles.brand}>
+        <Link href="/" className={styles.brand}>
           WorldForge <span>3D replay</span>
-        </div>
+        </Link>
         <label className={styles.field}>
           <span>Replay</span>
           <select

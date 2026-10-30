@@ -11,6 +11,8 @@ robot failed, and suggests new scenarios that might break it again. The simulato
 scenarios, and the results are compared against scenarios picked at random. Every run can be
 replayed in 3D in the browser.
 
+![alt text](image.png)
+
 ## How it fits together
 
 - `src/worldforge/`: the Python simulator. It is the only thing that decides what happens in a run.
@@ -45,7 +47,6 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 and pick a replay.
 
 ## Run the AI testing locally
 
@@ -63,7 +64,7 @@ cd web && npm run dev
 
 Fill in `NEBIUS_API_KEY` and set `SIMULATOR_TOKEN=devtoken` in `supabase/functions/.env`.
 Copy `web/.env.example` to `web/.env.local` and set the URL and anon key from `supabase status`.
-Then open `/?replay=failure`, go to the AI tab, and click "Run AI-guided tests".
+Then open `/demo?replay=failure`, go to the AI tab, and click "Run AI-guided tests".
 
 The API key only lives in the Supabase function secrets. The browser never sees it.
 

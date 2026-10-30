@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WorldForge 3D Replay",
-  description: "3D replay of WorldForge warehouse robot simulation results",
+  title: "WorldForge",
+  description: "Find the situations where your robot fails: simulation, AI-guided testing and 3D replay.",
 };
 
 export const viewport: Viewport = {
